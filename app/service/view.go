@@ -128,7 +128,7 @@ func SetFileMap(fileName string) {
 	}
 }
 
-//清除目录文件
+// 清除目录文件
 func ClearFile() {
 	logger.Println("-------------开始清除服务器文件------------")
 	//删除图片目录里的所有文件
@@ -185,7 +185,7 @@ func GetAllFile(pathname string) ([]map[string]string, error) {
 	return s, nil
 }
 
-//将Excel转html
+// 将Excel转html
 func ExcelPage(filePath string) []byte {
 	ret := utils.ExcelParse(filePath)
 	html := `

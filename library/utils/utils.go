@@ -31,7 +31,7 @@ func ComparePath(a string, b string) bool {
 	}
 }
 
-//转pdf
+// ConvertToPDF 转pdf
 func ConvertToPDF(filePath string) string {
 	//判断转换后的pdf文件是否已经存在
 	fileName := strings.Split(path.Base(filePath), ".")[0] + ".pdf"
@@ -64,13 +64,17 @@ func ConvertToPDF(filePath string) string {
 	}
 }
 
-//pdf增加水印
+// WaterMark pdf增加水印
 func WaterMark(pdfPath string, watermark string) string {
 	if watermark == "" {
 		watermark = g.Config().GetString("WaterMark.default")
 	}
+
 	fileName := watermark + "_" + strings.Split(path.Base(pdfPath), ".")[0] + ".pdf"
-	cmdStr := "/usr/local/pdfcpu watermark add -mode text -- " + "\"" + watermark + "\"" + "  \"sc:1, rot:45, mo:2,op:.3, color:.8 .8 .4\" " + pdfPath + " cache/pdf/" + fileName
+	CopyFile("cache/pdf/"+fileName, pdfPath)
+	resultPath := "cache/pdf/" + fileName
+	return resultPath
+	cmdStr := "pdfcpu watermark add -mode text -- " + "\"" + watermark + "\"" + "  \"sc:1, rot:45, mo:2,op:.3, color:.8 .8 .4\" " + pdfPath + " cache/pdf/" + fileName
 	if _, ok := Doexec(cmdStr); ok {
 		resultPath := "cache/pdf/" + fileName
 		if PathExists(resultPath) {
@@ -127,7 +131,7 @@ func ConvertToImg(filePath string) string {
 	}
 }
 
-//只支持linux
+// MsgToPdf 只支持linux
 func MsgToPdf(filePath string) string {
 	//判断转换后的pdf文件是否已经存在
 	fileName := strings.Split(path.Base(filePath), ".")[0] + ".pdf"
@@ -156,7 +160,7 @@ func MsgToPdf(filePath string) string {
 	}
 }
 
-//直接通过字符串执行shell命令，不拼接命令
+// Doexec 直接通过字符串执行shell命令，不拼接命令
 func Doexec(cmdStr string) (string, bool) {
 	cmd := exec.Command("bash", "-c", cmdStr)
 	log.Println("cmd:", cmd)
@@ -169,7 +173,7 @@ func Doexec(cmdStr string) (string, bool) {
 	}
 }
 
-//执行shell命令
+// 执行shell命令
 func interactiveToexec(commandName string, params []string) (string, bool) {
 	cmd := exec.Command(commandName, params...)
 	log.Println("cmd:", cmd)
@@ -240,7 +244,7 @@ func IsInArr(key string, arr []string) bool {
 	return false
 }
 
-//excel解析
+// ExcelParse excel解析
 func ExcelParse(filePath string) []map[string]interface{} {
 	xlFile, err := xlsx.OpenFile(filePath)
 	if err != nil {
@@ -278,4 +282,20 @@ func ExcelParse(filePath string) []map[string]interface{} {
 		resData = append(resData, tmp)
 	}
 	return resData
+}
+
+// CopyFile 文件拷贝
+func CopyFile(dstName, srcName string) (err error) {
+	source, err := os.ReadFile(srcName)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = os.WriteFile(dstName, source, 0644)
+	if err != nil {
+		fmt.Println("Error creating", dstName)
+		fmt.Println(err)
+		return
+	}
+	return nil
 }
