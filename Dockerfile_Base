@@ -1,0 +1,18 @@
+FROM centos:centos7
+
+# 设置固定的项目路径
+ENV WORKDIR /root
+ENV TZ=Asia/Shanghai
+
+RUN yum update -y  && yum  install -y deltarpm  wget   && export DISPLAY=:0.0 &&\
+    yum install -y libreoffice  libreoffice-headless  libreoffice-writer ImageMagick &&\
+    wget https://douguohai.oss-cn-shenzhen.aliyuncs.com/shard/wkhtmltox-0.12.6.1-2.almalinux8.aarch64.rpm  &&\
+    rpm --rebuilddb && yum install -y openssl && yum install -y xorg-x11-fonts-75dpi &&\
+    rpm -ivh wkhtmltox-0.12.6.1-2.almalinux8.aarch64.rpm && localedef -i en_US -f UTF-8 en_US.UTF-8 &&\
+    rm -rf /root/wkhtmltox-0.12.6.1-2.almalinux8.aarch64.rpm && yum clean all
+
+CMD  ["/bin/bash"]
+
+# ------------------------------------本地打包镜像---------------------
+# docker build -t  goviewfile:v0.7  .
+# docker run -d  -p 8082:8082 镜像ID

@@ -1,6 +1,6 @@
 module GoViewFile
 
-go 1.19
+go 1.18
 
 require (
 	github.com/gogf/gf v1.15.5
