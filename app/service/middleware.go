@@ -6,12 +6,12 @@ import (
 	"github.com/gogf/gf/net/ghttp"
 )
 
-// 中间件管理服务
+// Middleware 中间件管理服务
 var Middleware = middlewareService{}
 
 type middlewareService struct{}
 
-// 自定义上下文对象
+// Ctx 自定义上下文对象
 func (s *middlewareService) Ctx(r *ghttp.Request) {
 	// 初始化，务必最开始执行
 	customCtx := &model.Context{
@@ -22,7 +22,7 @@ func (s *middlewareService) Ctx(r *ghttp.Request) {
 	r.Middleware.Next()
 }
 
-// 允许接口跨域请求
+// CORS 允许接口跨域请求
 func (s *middlewareService) CORS(r *ghttp.Request) {
 	r.Response.CORSDefault()
 	r.Middleware.Next()

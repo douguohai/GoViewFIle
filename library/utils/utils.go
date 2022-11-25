@@ -160,7 +160,7 @@ func MsgToPdf(filePath string) string {
 	}
 }
 
-// 直接通过字符串执行shell命令，不拼接命令
+// Doexec 直接通过字符串执行shell命令，不拼接命令
 func Doexec(cmdStr string) (string, bool) {
 	cmd := exec.Command("bash", "-c", cmdStr)
 	log.Println("cmd:", cmd)
@@ -173,7 +173,7 @@ func Doexec(cmdStr string) (string, bool) {
 	}
 }
 
-// 执行shell命令
+//执行shell命令
 func interactiveToexec(commandName string, params []string) (string, bool) {
 	cmd := exec.Command(commandName, params...)
 	log.Println("cmd:", cmd)
@@ -244,7 +244,7 @@ func IsInArr(key string, arr []string) bool {
 	return false
 }
 
-// excel解析
+// ExcelParse excel解析
 func ExcelParse(filePath string) []map[string]interface{} {
 	xlFile, err := xlsx.OpenFile(filePath)
 	if err != nil {

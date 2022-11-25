@@ -3,9 +3,8 @@
 <head>
     <title>GoViewFile</title>
     <style>
-        .pdf {
-            height: 30rem;
-            border: 1rem solid rgba(0, 0, 0, .1);
+        #pdf {
+            border: 0.5rem solid rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -13,7 +12,15 @@
 <body>
     <div id="pdf"></div>
 </body>
-<script src="/html/js/pdfobject.js"></script>
-<script>PDFObject.embed("{{url}}", "#pdf");</script>
+<script src="/html/js/pdfobject.min.js"></script>
+<script>
+    var options = {
+        height: '100%',
+        pdfOpenParams: {view: 'FitV', page: '1'},
+        PDFJS_URL:'../pdfjs/web/viewer.html',
+        forcePDFJS:true,
+    };
+    PDFObject.embed("{{url}}", "#pdf",options);
+</script>
 
 </html>

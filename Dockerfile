@@ -1,23 +1,16 @@
-FROM centos:7.2.1511
-MAINTAINER czc "651267218@qq.com"
+FROM centos:centos7
 COPY fonts/* /usr/share/fonts/ChineseFonts/
 
 
 # 设置固定的项目路径
 ENV WORKDIR /var/www/GoViewFile
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
 ENV TZ=Asia/Shanghai
 
-RUN  yum install java -y
-
-RUN  yum  install deltarpm  -y  &&\          
-     yum install  libreoffice -y &&\
-     yum install libreoffice-headless -y &&\
-     yum install libreoffice-writer -y &&\
-     yum install ImageMagick -y  &&\
-     export DISPLAY=:0.0     
-
+RUN yum update -y  && yum  install -y deltarpm  wget   && export DISPLAY=:0.0 &&\
+    yum install -y libreoffice  libreoffice-headless  libreoffice-writer ImageMagick &&\
+    wget https://douguohai.oss-cn-shenzhen.aliyuncs.com/shard/wkhtmltox-0.12.6.1-2.almalinux8.aarch64.rpm  &&\
+    rpm --rebuilddb && yum install -y openssl && yum install -y xorg-x11-fonts-75dpi &&\
+    rpm -ivh wkhtmltox-0.12.6.1-2.almalinux8.aarch64.rpm && localedef -i en_US -f UTF-8 en_US.UTF-8 && \
 
 
 # 添加应用可执行文件，并设置执行权限
@@ -36,17 +29,8 @@ COPY cache/local/  $WORKDIR/cache/local/
 COPY cache/pdf/  $WORKDIR/cache/pdf/
 # jar包，用于将.msg文件转eml文件
 COPY library/emailconverter-2.5.3-all.jar   /usr/local/emailconverter-2.5.3-all.jar
-
 #pdf 添加水印
-COPY library/pdfcpu    /usr/local/pdfcpu
-
-
-# 安装wkhtmltopdf 用于将eml（html）文件转pdf
-RUN yum -y install wget &&\
-    wget http://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm  &&\
-    rpm --rebuilddb && yum install -y openssl && yum install -y xorg-x11-fonts-75dpi &&\
-    rpm -ivh wkhtmltox-0.12.5-1.centos7.x86_64.rpm
-
+COPY library/pdfcpu    /usr/local/bin/pdfcpu
 
 ###############################################################################
 #                                   START

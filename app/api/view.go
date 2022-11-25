@@ -18,12 +18,12 @@ import (
 
 var View = new(ViewApi)
 
-//本地文件路径
+// 本地文件路径
 var filePath string
 
 type ViewApi struct{}
 
-// @summary 预览文件入口
+// View @summary 预览文件入口
 // @tags    预览
 // @produce json
 // @param   entity "
@@ -154,7 +154,7 @@ func (a *ViewApi) View(r *ghttp.Request) {
 
 }
 
-// @summary 返回文件类容-img
+// Img @summary 返回文件类容-img
 // @tags    预览
 // @produce json
 // @param   entity "
@@ -186,11 +186,11 @@ func (a *ViewApi) Img(r *ghttp.Request) {
 	r.Response.Writer.Write(DataByte)
 }
 
-// @summary 返回文件类容-（转换后的pdf）
+// Pdf @summary 返回文件类容-（转换后的pdf）
 // @tags    预览
 // @produce json
 // @param   entity "
-// @router  /view/view [POST]
+// @router  /view/pdf [POST]
 // @success 200 {object} response.JsonResponse "执行结果"
 func (a *ViewApi) Pdf(r *ghttp.Request) {
 	var (
@@ -214,7 +214,7 @@ func (a *ViewApi) Pdf(r *ghttp.Request) {
 	r.Response.Writer.Write(DataByte)
 }
 
-// @summary 返回文件类容-（转换后的图片）
+// Office @summary 返回文件类容-（转换后的图片）
 // @tags    预览
 // @produce json
 // @param   entity "
@@ -245,7 +245,7 @@ func (a *ViewApi) Office(r *ghttp.Request) {
 
 // --------------------------------------------首页预览----------------------------------------
 
-// @summary 上传文件（用于测试预览）
+// Upload @summary 上传文件（用于测试预览）
 // @tags    预览
 // @produce json
 // @param   entity "
@@ -262,7 +262,7 @@ func (a *ViewApi) Upload(r *ghttp.Request) {
 	r.Response.WriteTpl("/index.html")
 }
 
-// @summary 删除本地上传的文件
+// Delete @summary 删除本地上传的文件
 // @tags    预览
 // @produce json
 // @param   entity "
