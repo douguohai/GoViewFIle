@@ -1,4 +1,4 @@
-FROM oviewfile-base:v1
+FROM goviewfile-base:v1
 
 # 设置固定的项目路径
 ENV WORKDIR /var/www/GoViewFile

@@ -1,0 +1,20 @@
+FROM centos:centos7
+
+ARG WKHTMLTOX_RPM=wkhtmltox-0.12.6-1.centos7.x86_64.rpm
+
+# 设置固定的项目路径
+ENV WORKDIR /root
+ENV TZ=Asia/Shanghai
+
+RUN yum update -y  && yum  install -y deltarpm  wget   && export DISPLAY=:0.0 &&\
+    yum install -y libreoffice  libreoffice-headless  libreoffice-writer ImageMagick &&\
+    wget https://douguohai.oss-cn-shenzhen.aliyuncs.com/shard/${WKHTMLTOX_RPM}  &&\
+    rpm --rebuilddb && yum install -y openssl && yum install -y xorg-x11-fonts-75dpi &&\
+    rpm -ivh ${WKHTMLTOX_RPM} && localedef -i en_US -f UTF-8 en_US.UTF-8 &&\
+    rm -rf /root/${WKHTMLTOX_RPM} && yum clean all
+
+CMD  ["/bin/bash"]
+
+# ------------------------------------本地打包镜像---------------------
+# docker build -t  goviewfile:v0.7  .
+# docker run -d  -p 8082:8082 镜像ID
