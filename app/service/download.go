@@ -12,6 +12,8 @@ import (
 	"GoViewFile/library/utils"
 )
 
+// IsFileExist 判断文件是否存在，先判断重名，再根据大小判断
+// 存在返回true，不存在返回false
 func IsFileExist(filename string, filesize int64) bool {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
@@ -23,9 +25,16 @@ func IsFileExist(filename string, filesize int64) bool {
 	os.Remove(filename)
 	return false
 }
+
+// DownloadFile
+// @title 下载文件至本地服务器
+// @param url:文件地址
+// @param localPath:本地存储路径
+// @return string:文件路径
+// @return error:错误信息
 func DownloadFile(url string, localPath string) (string, error) {
 	var (
-		fsize   int64
+		fSize   int64
 		buf     = make([]byte, 32*1024)
 		written int64
 	)
@@ -36,13 +45,13 @@ func DownloadFile(url string, localPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fsize, err = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 32)
+	fSize, err = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 32)
 
 	if err != nil {
 		log.Println("Error: <", err, "> when get file remote size")
 		return "", err
 	}
-	if IsFileExist(localPath, fsize) {
+	if IsFileExist(localPath, fSize) {
 		return "had", nil
 	}
 	file, err := os.Create(tmpFilePath)
