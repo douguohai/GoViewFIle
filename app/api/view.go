@@ -6,6 +6,8 @@ import (
 	"GoViewFile/library/logger"
 	"GoViewFile/library/response"
 	"GoViewFile/library/utils"
+	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -40,13 +42,29 @@ func (a *ViewApi) View(r *ghttp.Request) {
 
 	}
 
+	if decoded, err := base64.StdEncoding.DecodeString(reqData.Url); err != nil {
+		response.JsonExit(r, 1, "url 非base64编码")
+	} else {
+		fmt.Println(string(decoded))
+		reqData.Url = string(decoded)
+	}
+
 	if reqData.FileWay == "local" { //本地文件预览
 		filePath = reqData.Url
 	} else {
-		//下载文件
-		file, err := service.DownloadFile(reqData.Url, "cache/download/"+path.Base(reqData.Url))
+		//获取文件真实名称
+		baseName := path.Base(reqData.Url)
+		if index := strings.Index(baseName, "?"); index > 0 {
+			baseName = baseName[0:index]
+		}
+		_, err := os.Stat("cache/download/")
 		if err != nil {
-			logger.Print(err.Error())
+			os.MkdirAll("cache/download/", os.ModePerm)
+		}
+		//下载文件
+		file, err := service.DownloadFile(reqData.Url, "cache/download/"+baseName)
+		if err != nil {
+			logger.Println("下载文件失败", err.Error())
 			response.JsonExit(r, -1, "文件下载失败")
 		}
 		filePath = file
