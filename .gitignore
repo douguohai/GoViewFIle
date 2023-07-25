@@ -148,3 +148,5 @@ cache/download/*
 cache/local/*
 cache/pdf/*
 
+
+dist/

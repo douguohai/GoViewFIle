@@ -10,3 +10,6 @@ release-local:
 
 release:
 		goreleaser
+
+docker-build-base:
+		docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile_Base3 -t douguohai/goviewfile-base:v1 . --push
