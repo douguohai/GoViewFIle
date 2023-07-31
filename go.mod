@@ -3,6 +3,7 @@ module GoViewFile
 go 1.18
 
 require (
+	github.com/gogap/go-wkhtmltox v0.0.0-20191219095322-3135b6e34d94
 	github.com/gogf/gf v1.15.5
 	github.com/gogf/swagger v1.2.0
 	github.com/microcosm-cc/bluemonday v1.0.15
@@ -15,8 +16,11 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/clbanning/mxj v1.8.5-0.20200714211355-ff02cfb8ea28 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-akka/configuration v0.0.0-20200606091224-a002c0330665 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
+	github.com/gogap/config v0.0.0-20190801085516-e664631840ac // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
+	github.com/google/uuid v1.0.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/grokify/html-strip-tags-go v0.0.0-20200322061010-ea0c1cf2f119 // indirect
@@ -24,6 +28,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.10 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
+	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/rivo/uniseg v0.1.0 // indirect
 	go.opentelemetry.io/otel v0.19.0 // indirect
 	go.opentelemetry.io/otel/metric v0.19.0 // indirect

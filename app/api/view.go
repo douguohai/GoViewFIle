@@ -271,13 +271,32 @@ func (a *ViewApi) Office(r *ghttp.Request) {
 // @success 200 {object} response.JsonResponse "执行结果"
 func (a *ViewApi) Upload(r *ghttp.Request) {
 	files := r.GetUploadFile("upload-file")
-	_, _ = files.Save("cache/local/")
+	_, _ = files.Save("cache/local/", true)
 
 	allFile, _ := service.GetAllFile("cache/local/")
 	logger.Print(allFile)
 	view := r.GetView()
 	view.Assign("AllFile", allFile)
 	r.Response.WriteTpl("/index.html")
+}
+
+// PreUpload @summary 提前缓存文件，用户后续展示
+// @tags    提前缓存文件，用户后续展示
+// @produce json
+// @param   entity "
+// @router  /view/pre-upload [POST]
+// @success 200 {object} response.JsonResponse "执行结果"
+func (a *ViewApi) PreUpload(r *ghttp.Request) {
+	files := r.GetUploadFile("upload-file")
+	fileName, err := files.Save("cache/local/", true)
+	if err == nil {
+		fullName := "cache/local/" + fileName
+		path := base64.StdEncoding.EncodeToString([]byte(fullName))
+		logger.Print(fullName)
+		response.JsonExit(r, 0, fmt.Sprintf("/view/view?type=pdf&FileWay=local&url=%s", path))
+	} else {
+		response.JsonExit(r, -1, "")
+	}
 }
 
 // Delete @summary 删除本地上传的文件

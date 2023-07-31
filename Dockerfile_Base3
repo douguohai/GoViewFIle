@@ -1,8 +1,17 @@
+# Start from the latest golang base image
+FROM golang:latest as builder
+
+# install
+RUN go install github.com/pdfcpu/pdfcpu/cmd/pdfcpu@latest
+
+
 FROM centos:centos7
 
 # 设置固定的项目路径
 ENV WORKDIR /root
 ENV TZ=Asia/Shanghai
+
+COPY --from=builder /go/bin /usr/local/bin
 
 RUN yum update -y   && export DISPLAY=:0.0 &&\
     yum install -y deltarpm  wget  libreoffice  libreoffice-headless  libreoffice-writer ImageMagick  openssl  xorg-x11-fonts-75dpi && \

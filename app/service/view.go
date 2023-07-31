@@ -3,6 +3,7 @@ package service
 import (
 	"GoViewFile/library/logger"
 	"GoViewFile/library/utils"
+	"encoding/base64"
 	"io/ioutil"
 	"os"
 	"path"
@@ -128,7 +129,7 @@ func SetFileMap(fileName string) {
 	}
 }
 
-// 清除目录文件
+// ClearFile 清除目录文件
 func ClearFile() {
 	logger.Println("-------------开始清除服务器文件------------")
 	//删除图片目录里的所有文件
@@ -166,7 +167,7 @@ func ClearFile() {
 }
 
 func GetAllFile(pathname string) ([]map[string]string, error) {
-	s := []map[string]string{}
+	var s []map[string]string
 	rd, err := ioutil.ReadDir(pathname)
 	if err != nil {
 		return s, err
@@ -175,17 +176,17 @@ func GetAllFile(pathname string) ([]map[string]string, error) {
 	for _, fi := range rd {
 		tmp := map[string]string{}
 		if !fi.IsDir() {
-			fullName := pathname + "/" + fi.Name()
-			tmp["path"] = fullName
+			fullName := pathname + fi.Name()
 			tmp["name"] = fi.Name()
 			tmp["type"] = path.Ext(fullName)
+			tmp["path"] = base64.StdEncoding.EncodeToString([]byte(fullName))
 		}
 		s = append(s, tmp)
 	}
 	return s, nil
 }
 
-// 将Excel转html
+// ExcelPage 将Excel转html
 func ExcelPage(filePath string) []byte {
 	ret := utils.ExcelParse(filePath)
 	html := `
