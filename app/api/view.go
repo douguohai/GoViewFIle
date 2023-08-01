@@ -8,6 +8,9 @@ import (
 	"GoViewFile/library/utils"
 	"encoding/base64"
 	"fmt"
+	"github.com/gogf/gf/os/gfile"
+	"github.com/gogf/gf/os/gtime"
+	"github.com/gogf/gf/util/grand"
 	"io/ioutil"
 	"log"
 	"os"
@@ -45,7 +48,7 @@ func (a *ViewApi) View(r *ghttp.Request) {
 	if decoded, err := base64.StdEncoding.DecodeString(reqData.Url); err != nil {
 		response.JsonExit(r, 1, "url 非base64编码")
 	} else {
-		fmt.Println(string(decoded))
+		logger.Infof("decode ->  解析到文件url {}", string(decoded))
 		reqData.Url = string(decoded)
 	}
 
@@ -54,9 +57,8 @@ func (a *ViewApi) View(r *ghttp.Request) {
 	} else {
 		//获取文件真实名称
 		baseName := path.Base(reqData.Url)
-		if index := strings.Index(baseName, "?"); index > 0 {
-			baseName = baseName[0:index]
-		}
+		name := strings.ToLower(strconv.FormatInt(gtime.TimestampNano(), 36) + grand.S(6))
+		baseName = name + gfile.Ext(baseName)
 		_, err := os.Stat("cache/download/")
 		if err != nil {
 			os.MkdirAll("cache/download/", os.ModePerm)

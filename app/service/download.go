@@ -8,8 +8,6 @@ import (
 	"os"
 	"path"
 	"strconv"
-
-	"GoViewFile/library/utils"
 )
 
 // IsFileExist 判断文件是否存在，先判断重名，再根据大小判断
@@ -88,11 +86,11 @@ func DownloadFile(url string, localPath string) (string, error) {
 	}
 	if err == nil {
 		file.Close()
-		fileMd5 := utils.GetFileMD5(tmpFilePath)
-		newPath := "cache/download/" + fileMd5 + path.Ext(localPath)
-		os.Rename(tmpFilePath, newPath)
-		log.Printf("Download file <filename:%s, md5:%s> success\n", path.Base(localPath), fileMd5)
-		return newPath, nil
+		//fileMd5 := utils.GetFileMD5(tmpFilePath)
+		//newPath := "cache/download/" + fileMd5 + path.Ext(localPath)
+		os.Rename(tmpFilePath, localPath)
+		log.Printf("Download file <filename:%s, md5:%s> success\n", path.Base(localPath), localPath)
+		return localPath, nil
 	}
 	return "", err
 }
