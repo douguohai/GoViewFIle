@@ -15,12 +15,15 @@
 
   <div class="container">
     <h2>GoViewFile</h2>
-    <p>预览服务</p>
+    <p>临时文件预览服务，不定时清除上传附件</p>
     <body>
-        <form enctype="multipart/form-data" action="/view/upload" method="post">
-            <input type="file" name="upload-file" />
-            <input type="submit" value="upload" style="background-color: #7ED321;width: 76px;height: 36px;color: #FFFFFF" />
-        </form>
+    <form enctype="multipart/form-data" action="/view/upload" method="post">
+      认证码: <input type="text" lab name="try-code" required/>
+      <br/>
+      文件: <input type="file" name="upload-file" required/>
+
+      <input type="submit" value="upload" style="background-color: #7ED321;width: 76px;height: 36px;color: #FFFFFF"/>
+    </form>
     </body>
     <br><br>
 

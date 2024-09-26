@@ -4,6 +4,7 @@ import (
 	"GoViewFile/library/logger"
 	"bytes"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -298,4 +300,20 @@ func CopyFile(dstName, srcName string) (err error) {
 		return
 	}
 	return nil
+}
+
+// CurrentDir 当前程序执行目录
+var CurrentDir, _ = os.Getwd()
+
+// LocalFileUrlCheck 本地文件访问路径核查
+func LocalFileUrlCheck(filePath string) (bool, error) {
+	fileAbsPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return false, errors.New("文件路径解析异常")
+	}
+	fmt.Println("访问绝对路径为: ", fileAbsPath)
+	if strings.Index(fileAbsPath, CurrentDir) != 0 {
+		return false, errors.New("访问路径超出允许执行范围，疑似攻击")
+	}
+	return true, nil
 }

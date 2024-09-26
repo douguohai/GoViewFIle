@@ -22,7 +22,7 @@ func IsFileExist(filename string, filesize int64) bool {
 	if filesize == info.Size() {
 		return true
 	}
-	os.Remove(filename)
+	_ = os.Remove(filename)
 	return false
 }
 
@@ -58,11 +58,15 @@ func DownloadFile(url string, localPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
 	if resp.Body == nil {
 		return "", errors.New("body is null")
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	for {
 		nr, er := resp.Body.Read(buf)
 		if nr > 0 {
@@ -87,10 +91,10 @@ func DownloadFile(url string, localPath string) (string, error) {
 		}
 	}
 	if err == nil {
-		file.Close()
+		_ = file.Close()
 		fileMd5 := utils.GetFileMD5(tmpFilePath)
 		newPath := "cache/download/" + fileMd5 + path.Ext(localPath)
-		os.Rename(tmpFilePath, newPath)
+		_ = os.Rename(tmpFilePath, newPath)
 		log.Printf("Download file <filename:%s, md5:%s> success\n", path.Base(localPath), fileMd5)
 		return newPath, nil
 	}

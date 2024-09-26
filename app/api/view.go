@@ -7,8 +7,7 @@ import (
 	"GoViewFile/library/response"
 	"GoViewFile/library/utils"
 	"encoding/base64"
-	"fmt"
-	"io/ioutil"
+	"github.com/gogf/gf/frame/g"
 	"log"
 	"os"
 	"path"
@@ -23,7 +22,21 @@ var View = new(ViewApi)
 // 本地文件路径
 var filePath string
 
+// FileDownloadDir 本地缓存文件夹
+const FileDownloadDir = "cache/download/"
+
+const FileLocalCacheDir = "cache/local/"
+
+// HeaderOfContentLength 请求头
+const HeaderOfContentLength = "content-length"
+
+// HeaderOfContentType 请求头
+const HeaderOfContentType = "content-type"
+
 type ViewApi struct{}
+
+// TryCode 体验码，允许临时文件上传
+var TryCode = g.Config().GetString("TryCode.default")
 
 // View @summary 预览文件入口
 // @tags    预览
@@ -37,19 +50,23 @@ func (a *ViewApi) View(r *ghttp.Request) {
 	)
 	//解析参数
 	if err := r.Parse(&reqData); err != nil {
-		logger.Errorf("View ->   execution failed. err", err.Error())
+		logger.Errorf("View ->   execution failed. err %v", err.Error())
 		response.JsonExit(r, 1, "参数解析错误")
-
 	}
 
 	if decoded, err := base64.StdEncoding.DecodeString(reqData.Url); err != nil {
+		logger.Error("url 非base64编码,异常截断:")
 		response.JsonExit(r, 1, "url 非base64编码")
 	} else {
-		fmt.Println(string(decoded))
+		logger.Info("解析文件地址为:" + string(decoded))
 		reqData.Url = string(decoded)
 	}
 
 	if reqData.FileWay == "local" { //本地文件预览
+		_, err := utils.LocalFileUrlCheck(reqData.Url)
+		if err != nil {
+			response.JsonExit(r, -1, err.Error())
+		}
 		filePath = reqData.Url
 	} else {
 		//获取文件真实名称
@@ -57,14 +74,17 @@ func (a *ViewApi) View(r *ghttp.Request) {
 		if index := strings.Index(baseName, "?"); index > 0 {
 			baseName = baseName[0:index]
 		}
-		_, err := os.Stat("cache/download/")
+		_, err := os.Stat(FileDownloadDir)
 		if err != nil {
-			os.MkdirAll("cache/download/", os.ModePerm)
+			err := os.MkdirAll(FileDownloadDir, os.ModePerm)
+			if err != nil {
+				return
+			}
 		}
 		//下载文件
-		file, err := service.DownloadFile(reqData.Url, "cache/download/"+baseName)
+		file, err := service.DownloadFile(reqData.Url, FileDownloadDir+baseName)
 		if err != nil {
-			logger.Println("下载文件失败", err.Error())
+			logger.Error("下载文件失败: ", err.Error())
 			response.JsonExit(r, -1, "文件下载失败")
 		}
 		filePath = file
@@ -74,9 +94,9 @@ func (a *ViewApi) View(r *ghttp.Request) {
 	//MD文件预览
 	if fileType == ".md" {
 		dataByte := service.MdPage(filePath)
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 
@@ -92,9 +112,9 @@ func (a *ViewApi) View(r *ghttp.Request) {
 		}
 
 		dataByte := service.PdfPage("cache/pdf/" + path.Base(waterPdf))
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 
@@ -106,26 +126,26 @@ func (a *ViewApi) View(r *ghttp.Request) {
 		}
 		log.Println("waterPdf", waterPdf)
 		dataByte := service.PdfPage("cache/pdf/" + path.Base(waterPdf))
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 	//后缀png , jpg ,gif
 	if utils.IsInArr(fileType, service.AllImageEtx) {
 		dataByte := service.ImagePage(filePath)
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 
 	// 后缀xlsx
 	if (fileType == ".xlsx" || fileType == ".xls") && reqData.Type != "pdf" {
 		dataByte := service.ExcelPage(filePath)
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 
@@ -145,9 +165,9 @@ func (a *ViewApi) View(r *ghttp.Request) {
 			response.JsonExit(r, -1, "转图片失败")
 		}
 		dataByte := service.OfficePage("cache/convert/" + path.Base(imgPath))
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 
@@ -162,9 +182,9 @@ func (a *ViewApi) View(r *ghttp.Request) {
 			response.JsonExit(r, -1, "添加水印失败")
 		}
 		dataByte := service.PdfPage("cache/pdf/" + path.Base(waterPdf))
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte(dataByte))
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
 
@@ -184,24 +204,28 @@ func (a *ViewApi) Img(r *ghttp.Request) {
 	)
 	//解析参数
 	if err := r.Parse(&reqData); err != nil {
-		logger.Errorf("View ->   execution failed. err", err.Error())
+		logger.Errorf("View ->   execution failed. err: %v", err.Error())
 		response.JsonExit(r, 1, "参数解析错误")
 
 	}
 	imgPath := reqData.Url
-	DataByte, err := ioutil.ReadFile("cache/download/" + imgPath)
+	_, err := utils.LocalFileUrlCheck(imgPath)
+	if err != nil {
+		response.JsonExit(r, -1, err.Error())
+	}
+	DataByte, err := os.ReadFile("cache/download/" + imgPath)
 	if err != nil { //如果是本地预览，则文件在local木下下
-		DataByte, err = ioutil.ReadFile("cache/local/" + imgPath)
+		DataByte, err = os.ReadFile(FileLocalCacheDir + imgPath)
 		if err != nil {
-			r.Response.Writer.Header().Set("content-length", strconv.Itoa(len("404")))
-			r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-			r.Response.Writer.Write([]byte("出现了一些问题,导致File View无法获取您的数据!"))
+			r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len("404")))
+			r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+			_, _ = r.Response.Writer.Write([]byte("出现了一些问题,导致File View无法获取您的数据!"))
 			return
 		}
 	}
-	r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(DataByte)))
-	r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-	r.Response.Writer.Write(DataByte)
+	r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(DataByte)))
+	r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+	_, _ = r.Response.Writer.Write(DataByte)
 }
 
 // Pdf @summary 返回文件类容-（转换后的pdf）
@@ -216,20 +240,24 @@ func (a *ViewApi) Pdf(r *ghttp.Request) {
 	)
 	//解析参数
 	if err := r.Parse(&reqData); err != nil {
-		logger.Errorf("View ->   execution failed. err", err.Error())
+		logger.Errorf("View ->   execution failed. err : %v", err.Error())
 		response.JsonExit(r, 1, "参数解析错误")
 
 	}
 	imgPath := reqData.Url
-	DataByte, err := ioutil.ReadFile("cache/pdf/" + imgPath)
+	_, err := utils.LocalFileUrlCheck(imgPath)
 	if err != nil {
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len("404")))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte("出现了一些问题,导致File View无法获取您的数据!"))
+		response.JsonExit(r, -1, err.Error())
+	}
+	DataByte, err := os.ReadFile("cache/pdf/" + imgPath)
+	if err != nil {
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len("404")))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write([]byte("出现了一些问题,导致File View无法获取您的数据!"))
 		return
 	}
-	r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(DataByte)))
-	r.Response.Writer.Write(DataByte)
+	r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(DataByte)))
+	_, _ = r.Response.Writer.Write(DataByte)
 }
 
 // Office @summary 返回文件类容-（转换后的图片）
@@ -244,24 +272,26 @@ func (a *ViewApi) Office(r *ghttp.Request) {
 	)
 	//解析参数
 	if err := r.Parse(&reqData); err != nil {
-		logger.Errorf("View ->   execution failed. err", err.Error())
+		logger.Errorf("View ->   execution failed. err: %v", err.Error())
 		response.JsonExit(r, 1, "参数解析错误")
 
 	}
 	imgPath := reqData.Url
-	DataByte, err := ioutil.ReadFile("cache/convert/" + imgPath)
+	_, err := utils.LocalFileUrlCheck(imgPath)
 	if err != nil {
-		r.Response.Writer.Header().Set("content-length", strconv.Itoa(len("404")))
-		r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-		r.Response.Writer.Write([]byte("出现了一些问题,导致File View无法获取您的数据!"))
+		response.JsonExit(r, -1, err.Error())
+	}
+	DataByte, err := os.ReadFile("cache/convert/" + imgPath)
+	if err != nil {
+		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len("404")))
+		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+		_, _ = r.Response.Writer.Write([]byte("出现了一些问题,导致File View无法获取您的数据!"))
 		return
 	}
-	r.Response.Writer.Header().Set("content-length", strconv.Itoa(len(DataByte)))
-	r.Response.Writer.Header().Set("content-type:", "text/html;charset=UTF-8")
-	r.Response.Writer.Write(DataByte)
-}
-
-// --------------------------------------------首页预览----------------------------------------
+	r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(DataByte)))
+	r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
+	_, _ = r.Response.Writer.Write(DataByte)
+} // --------------------------------------------首页预览----------------------------------------
 
 // Upload @summary 上传文件（用于测试预览）
 // @tags    预览
@@ -270,39 +300,18 @@ func (a *ViewApi) Office(r *ghttp.Request) {
 // @router  /view/Upload [POST]
 // @success 200 {object} response.JsonResponse "执行结果"
 func (a *ViewApi) Upload(r *ghttp.Request) {
+	tryCode := r.GetString("try-code", "")
+	if tryCode != TryCode {
+		view := r.GetView()
+		view.Assign("Msg", "非法上传访问")
+		_ = r.Response.WriteTpl("/error.html")
+		return
+	}
 	files := r.GetUploadFile("upload-file")
-	_, _ = files.Save("cache/local/")
+	_, _ = files.Save(FileLocalCacheDir, true)
 
-	allFile, _ := service.GetAllFile("cache/local/")
-	logger.Print(allFile)
+	allFile, _ := service.GetAllFile(FileLocalCacheDir)
 	view := r.GetView()
 	view.Assign("AllFile", allFile)
-	r.Response.WriteTpl("/index.html")
-}
-
-// Delete @summary 删除本地上传的文件
-// @tags    预览
-// @produce json
-// @param   entity "
-// @router  /view/delete [POST]
-// @success 200 {object} response.JsonResponse "执行结果"
-func (a *ViewApi) Delete(r *ghttp.Request) {
-	var (
-		reqData *model.ViewReq
-	)
-	//解析参数
-	if err := r.Parse(&reqData); err != nil {
-		logger.Errorf("View ->   execution failed. err", err.Error())
-		response.JsonExit(r, 1, "参数解析错误")
-
-	}
-	file := reqData.Url
-	err := os.Remove(file)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	allFile, _ := service.GetAllFile("cache/local/")
-	view := r.GetView()
-	view.Assign("AllFile", allFile)
-	r.Response.WriteTpl("/index.html")
+	_ = r.Response.WriteTpl("/index.html")
 }

@@ -3,15 +3,14 @@ package service
 import (
 	"GoViewFile/library/logger"
 	"GoViewFile/library/utils"
+	"encoding/base64"
+	"github.com/gogf/gf/util/gconv"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/russross/blackfriday"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-	"time"
-
-	"github.com/gogf/gf/util/gconv"
-	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
 )
 
 type NowFile struct {
@@ -21,27 +20,16 @@ type NowFile struct {
 }
 
 var (
-	Pattern      string
-	Address      string
 	AllFile      map[string]*NowFile
-	ExpireTime   int64
 	AllOfficeEtx = []string{".doc", ".docx", ".xls", ".xlsx", ".csv", ".ppt", ".pptx", ".txt", ".msg"}
 	AllImageEtx  = []string{".jpg", ".png", ".gif"}
 )
 
 func OfficePage(imgPath string) []byte {
-	rd, _ := ioutil.ReadDir(imgPath)
-	dataByte, _ := ioutil.ReadFile("public/html/office.html")
+	rd, _ := os.ReadDir(imgPath)
+	dataByte, _ := os.ReadFile("public/html/office.html")
 	dataStr := string(dataByte)
 	htmlCode := ""
-	// for _, fi := range rd {
-	// 	if !fi.IsDir() {
-	// 		htmlCode = htmlCode + `<img class="my-photo" alt="loading" title="查看大图" style="cursor: pointer;"
-	// 								data-src="/view/office?url=` + path.Base(imgPath) + "/" + fi.Name() + `" src="images/loading.gif"
-	// 								">`
-	// 	}
-	// }
-
 	//----上面方法图片会乱序-----
 	for i := 0; i < len(rd); i++ {
 		htmlCode = htmlCode +
@@ -70,7 +58,7 @@ func ImagePage(filePath string) []byte {
 }
 
 func PdfPage(filePath string) []byte {
-	dataByte, _ := ioutil.ReadFile("public/html/pdf.html")
+	dataByte, _ := os.ReadFile("public/html/pdf.html")
 	dataStr := string(dataByte)
 
 	pdfUrl := "/view/pdf?url=" + path.Base(filePath)
@@ -80,21 +68,12 @@ func PdfPage(filePath string) []byte {
 	return dataByte
 }
 
-func PdfPageDownload(filePath string) []byte {
-	dataByte, _ := ioutil.ReadFile("public/html/pdf.html")
-	dataStr := string(dataByte)
-	pdfUrl := "/view/img?url=" + path.Base(filePath)
-	dataStr = strings.Replace(dataStr, "{{url}}", pdfUrl, -1)
-	dataByte = []byte(dataStr)
-	return dataByte
-}
-
 func MdPage(filepath string) []byte {
-	Byte, _ := ioutil.ReadFile(filepath)
+	Byte, _ := os.ReadFile(filepath)
 	unsafe := blackfriday.MarkdownCommon(Byte)
 	html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
-	dataByte, _ := ioutil.ReadFile("public/html/md.html")
+	dataByte, _ := os.ReadFile("public/html/md.html")
 	dataStr := string(dataByte)
 
 	dataStr = strings.Replace(dataStr, "{{url}}", string(html), -1)
@@ -102,54 +81,28 @@ func MdPage(filepath string) []byte {
 	return dataByte
 }
 
-func IsHave(fileName string) bool {
-	fileName = strings.Split(fileName, ".")[0]
-	if _, ok := AllFile[fileName]; ok {
-		AllFile[fileName].LastActiveTime = time.Now().Unix()
-		return true
-	} else {
-		return false
-	}
-}
-
-func SetFileMap(fileName string) {
-	ext := path.Ext(fileName)
-	fileName = strings.Split(fileName, ".")[0]
-	if _, ok := AllFile[fileName]; ok {
-		AllFile[fileName].LastActiveTime = time.Now().Unix()
-		return
-	} else {
-		temp := &NowFile{
-			Md5:            fileName,
-			Ext:            ext,
-			LastActiveTime: time.Now().Unix(),
-		}
-		AllFile[fileName] = temp
-	}
-}
-
-// 清除目录文件
+// ClearFile  清除目录文件
 func ClearFile() {
 	logger.Println("-------------开始清除服务器文件------------")
 	//删除图片目录里的所有文件
-	dir1, err := ioutil.ReadDir("cache/convert")
+	dir1, err := os.ReadDir("cache/convert")
 	if err != nil {
 		logger.Println("CLearFIle读取目录错误:", err.Error())
 		return
 	}
 	for _, d := range dir1 {
-		os.RemoveAll(path.Join([]string{"cache/convert", d.Name()}...))
+		_ = os.RemoveAll(path.Join([]string{"cache/convert", d.Name()}...))
 	}
 	logger.Println("cache/convert 已清除")
 
 	//删除本地下载文件目录里的所有文件
-	dir2, err := ioutil.ReadDir("cache/download")
+	dir2, err := os.ReadDir("cache/download")
 	if err != nil {
 		logger.Println("CLearFIle读取目录错误:", err.Error())
 		return
 	}
 	for _, d := range dir2 {
-		os.RemoveAll(path.Join([]string{"cache/download", d.Name()}...))
+		_ = os.RemoveAll(path.Join([]string{"cache/download", d.Name()}...))
 	}
 	logger.Println("cache/download 已清除")
 	//删除pdf目录里的所有文件
@@ -159,15 +112,15 @@ func ClearFile() {
 		return
 	}
 	for _, d := range dir3 {
-		os.RemoveAll(path.Join([]string{"cache/pdf", d.Name()}...))
+		_ = os.RemoveAll(path.Join([]string{"cache/pdf", d.Name()}...))
 	}
 	logger.Println("cache/pdf 已清除")
 	logger.Println("---------------清除文件已完成--------------")
 }
 
 func GetAllFile(pathname string) ([]map[string]string, error) {
-	s := []map[string]string{}
-	rd, err := ioutil.ReadDir(pathname)
+	var s []map[string]string
+	rd, err := os.ReadDir(pathname)
 	if err != nil {
 		return s, err
 	}
@@ -175,8 +128,8 @@ func GetAllFile(pathname string) ([]map[string]string, error) {
 	for _, fi := range rd {
 		tmp := map[string]string{}
 		if !fi.IsDir() {
-			fullName := pathname + "/" + fi.Name()
-			tmp["path"] = fullName
+			fullName := pathname + fi.Name()
+			tmp["path"] = base64.StdEncoding.EncodeToString([]byte(fullName))
 			tmp["name"] = fi.Name()
 			tmp["type"] = path.Ext(fullName)
 		}
@@ -185,7 +138,7 @@ func GetAllFile(pathname string) ([]map[string]string, error) {
 	return s, nil
 }
 
-// 将Excel转html
+// ExcelPage 将Excel转html
 func ExcelPage(filePath string) []byte {
 	ret := utils.ExcelParse(filePath)
 	html := `
@@ -235,7 +188,7 @@ func ExcelPage(filePath string) []byte {
 		</script><script src="/html/js/excel.header.js" type="text/javascript">
 		</script><link rel="stylesheet" href="/html/css/bootstrap.min.css">
 		`
-	dataByte, _ := ioutil.ReadFile("public/html/excel.html")
+	dataByte, _ := os.ReadFile("public/html/excel.html")
 	dataStr := string(dataByte)
 
 	dataStr = strings.Replace(dataStr, "{{url}}", html, -1)
