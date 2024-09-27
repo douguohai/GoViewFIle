@@ -133,35 +133,6 @@ func ConvertToImg(filePath string) string {
 	}
 }
 
-// MsgToPdf 只支持linux
-func MsgToPdf(filePath string) string {
-	//判断转换后的pdf文件是否已经存在
-	fileName := strings.Split(path.Base(filePath), ".")[0] + ".pdf"
-	fileOld := "cache/pdf/" + fileName
-	if FileExit(fileOld) {
-		return fileOld
-	}
-	commandName := ""
-	var params []string
-	if runtime.GOOS == "windows" {
-		return ""
-	} else if runtime.GOOS == "linux" {
-		commandName = "java"
-		params = []string{"-jar", "/usr/local/emailconverter-2.5.3-all.jar", filePath, "-o ", "cache/pdf/" + fileName}
-	}
-	if _, ok := interactiveToexec(commandName, params); ok {
-		resultPath := "cache/pdf/" + strings.Split(path.Base(filePath), ".")[0] + ".pdf"
-		if PathExists(resultPath) {
-			log.Printf("Convert <%s> to pdf\n", path.Base(filePath))
-			return resultPath
-		} else {
-			return ""
-		}
-	} else {
-		return ""
-	}
-}
-
 // Doexec 直接通过字符串执行shell命令，不拼接命令
 func Doexec(cmdStr string) (string, bool) {
 	cmd := exec.Command("bash", "-c", cmdStr)
@@ -311,8 +282,9 @@ func LocalFileUrlCheck(filePath string) (bool, error) {
 	if err != nil {
 		return false, errors.New("文件路径解析异常")
 	}
-	fmt.Println("访问绝对路径为: ", fileAbsPath)
-	if strings.Index(fileAbsPath, CurrentDir) != 0 {
+	currentDir := CurrentDir + "/cache/"
+	logger.Infof("访问绝对路径为: %s, 允许访问目录: %s", fileAbsPath, currentDir)
+	if strings.Index(fileAbsPath, currentDir) != 0 {
 		return false, errors.New("访问路径超出允许执行范围，疑似攻击")
 	}
 	return true, nil

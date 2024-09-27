@@ -7,6 +7,7 @@ import (
 	"GoViewFile/library/response"
 	"GoViewFile/library/utils"
 	"encoding/base64"
+	"fmt"
 	"github.com/gogf/gf/frame/g"
 	"log"
 	"os"
@@ -99,25 +100,6 @@ func (a *ViewApi) View(r *ghttp.Request) {
 		_, _ = r.Response.Writer.Write(dataByte)
 		return
 	}
-
-	//MD文件预览
-	if fileType == ".msg" || fileType == ".eml" {
-		pdfPath := utils.MsgToPdf(filePath)
-		if pdfPath == "" {
-			response.JsonExit(r, -1, "转pdf失败")
-		}
-		waterPdf := utils.WaterMark(pdfPath, reqData.WaterMark)
-		if waterPdf == "" {
-			response.JsonExit(r, -1, "添加水印失败")
-		}
-
-		dataByte := service.PdfPage("cache/pdf/" + path.Base(waterPdf))
-		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len(dataByte)))
-		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
-		_, _ = r.Response.Writer.Write(dataByte)
-		return
-	}
-
 	//后缀是pdf直接读取文件类容返回
 	if fileType == ".pdf" {
 		waterPdf := utils.WaterMark(filePath, reqData.WaterMark)
@@ -209,13 +191,15 @@ func (a *ViewApi) Img(r *ghttp.Request) {
 
 	}
 	imgPath := reqData.Url
-	_, err := utils.LocalFileUrlCheck(imgPath)
-	if err != nil {
-		response.JsonExit(r, -1, err.Error())
-	}
 	DataByte, err := os.ReadFile("cache/download/" + imgPath)
-	if err != nil { //如果是本地预览，则文件在local木下下
-		DataByte, err = os.ReadFile(FileLocalCacheDir + imgPath)
+	//如果是本地预览，则文件在local木下下
+	if err != nil {
+		imgPath := fmt.Sprintf("%s%s", FileLocalCacheDir, reqData.Url)
+		_, err := utils.LocalFileUrlCheck(imgPath)
+		if err != nil {
+			response.JsonExit(r, -1, err.Error())
+		}
+		DataByte, err = os.ReadFile(imgPath)
 		if err != nil {
 			r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len("404")))
 			r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
@@ -244,12 +228,12 @@ func (a *ViewApi) Pdf(r *ghttp.Request) {
 		response.JsonExit(r, 1, "参数解析错误")
 
 	}
-	imgPath := reqData.Url
+	imgPath := fmt.Sprintf("cache/pdf/%v", reqData.Url)
 	_, err := utils.LocalFileUrlCheck(imgPath)
 	if err != nil {
 		response.JsonExit(r, -1, err.Error())
 	}
-	DataByte, err := os.ReadFile("cache/pdf/" + imgPath)
+	DataByte, err := os.ReadFile(imgPath)
 	if err != nil {
 		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len("404")))
 		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
@@ -276,12 +260,16 @@ func (a *ViewApi) Office(r *ghttp.Request) {
 		response.JsonExit(r, 1, "参数解析错误")
 
 	}
-	imgPath := reqData.Url
+
+	imgPath := fmt.Sprintf("cache/convert/%v", reqData.Url)
+
 	_, err := utils.LocalFileUrlCheck(imgPath)
 	if err != nil {
 		response.JsonExit(r, -1, err.Error())
 	}
-	DataByte, err := os.ReadFile("cache/convert/" + imgPath)
+
+	DataByte, err := os.ReadFile(imgPath)
+
 	if err != nil {
 		r.Response.Writer.Header().Set(HeaderOfContentLength, strconv.Itoa(len("404")))
 		r.Response.Writer.Header().Set(HeaderOfContentType, "text/html;charset=UTF-8")
