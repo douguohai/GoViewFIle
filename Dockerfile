@@ -2,9 +2,8 @@ FROM golang:alpine AS builder
 
 WORKDIR /root
 ENV WORKDIR=/root
-ENV GOPROXY=https://goproxy.cn,direct
 ADD . $WORKDIR
-RUN go install github.com/pdfcpu/pdfcpu/cmd/pdfcpu@latest  && go build -o GoViewFIle
+RUN go env -w GOPROXY=https://goproxy.cn,direct && go env -w GO111MODULE=on  && go install github.com/pdfcpu/pdfcpu/cmd/pdfcpu@latest  && go build -o GoViewFIle
 
 
 FROM fedora:latest AS runner
@@ -15,7 +14,7 @@ WORKDIR /var/www/GoViewFile
 ENV WORKDIR=/var/www/GoViewFile
 ENV DISPLAY=:0.0
 
-RUN yum update -y   &&\
+RUN yum makecache  &&\
     yum install -y deltarpm  wget  libreoffice  libreoffice-headless  libreoffice-writer ImageMagick  openssl  xorg-x11-fonts-75dpi && yum clean all
 
 COPY --from=builder /root/fonts/* /usr/share/fonts/ChineseFonts/
