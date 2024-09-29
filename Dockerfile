@@ -1,4 +1,4 @@
-FROM golang:1.23.1 AS builder
+FROM golang:alpine AS builder
 
 WORKDIR /root
 ENV WORKDIR=/root
